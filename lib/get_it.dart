@@ -1,6 +1,7 @@
 library get_it;
 
 import 'dart:async';
+import 'dart:mirrors';
 
 import 'package:async/async.dart';
 import 'package:collection/collection.dart' show IterableExtension;
@@ -159,6 +160,16 @@ abstract class GetIt {
     dynamic param1,
     dynamic param2,
   });
+
+  T? opt<T extends Object>({
+    String? instanceName,
+    dynamic param1,
+    dynamic param2,
+  });
+
+  List<T> list<T extends Object>();
+
+  Map<String, T> map<T extends Object>();
 
   /// Returns a Future of an instance that is created by an async factory or a Singleton that is
   /// not ready with its initialization.

@@ -446,6 +446,91 @@ class _GetItImplementation implements GetIt {
     return factoryToGet.getObjectAsync<T>(param1, param2);
   }
 
+  // Support for optional types. When specified type is not registered in get_it, this method will return null instead of throwing an exception.
+  @override
+  T? opt<T extends Object>({
+    String? instanceName,
+    dynamic param1,
+    dynamic param2,
+  }) {
+    if (isRegistered<T>(instanceName: instanceName)) {
+      return get(instanceName: instanceName, param1: param1, param2: param2);
+    }
+    return null;
+  }
+
+  List<_ServiceFactory<T, dynamic, dynamic>> _listFactories<T extends Object>(
+      [Type? type]) {
+    final List<_ServiceFactory<T, dynamic, dynamic>> instanceFactories = [];
+
+    int scopeLevel = _scopes.length - 1;
+
+    while (scopeLevel >= 0) {
+      final factories = _scopes[scopeLevel].allFactories;
+      for (final factory in factories) {
+        if (factory is _ServiceFactory<T, dynamic, dynamic>) {
+          instanceFactories.add(factory);
+        }
+      }
+      scopeLevel--;
+    }
+    return instanceFactories;
+  }
+
+  @override
+  List<T> list<T extends Object>() {
+    final List<_ServiceFactory<T, dynamic, dynamic>> factories =
+        _listFactories<T>();
+
+    final List<T> instances = [];
+    for (final instanceFactory in factories) {
+      if (instanceFactory.isAsync || instanceFactory.pendingResult != null) {
+        /// We use an assert here instead of an `if..throw` for performance reasons
+        assert(
+          instanceFactory.factoryType == _ServiceFactoryType.constant ||
+              instanceFactory.factoryType == _ServiceFactoryType.lazy,
+          "You can't use get with an async Factory of ${T.toString()}.",
+        );
+        assert(
+          instanceFactory.isReady,
+          'You tried to access an instance of ${T.toString()} that is not ready yet',
+        );
+        instances.add(instanceFactory.instance as T);
+      } else {
+        instances.add(instanceFactory.getObject(null, null));
+      }
+    }
+    return instances;
+  }
+
+  @override
+  Map<String, T> map<T extends Object>() {
+    final List<_ServiceFactory<T, dynamic, dynamic>> factories =
+        _listFactories<T>();
+
+    final Map<String, T> instances = {};
+    for (final instanceFactory in factories) {
+      if (instanceFactory.isAsync || instanceFactory.pendingResult != null) {
+        /// We use an assert here instead of an `if..throw` for performance reasons
+        assert(
+          instanceFactory.factoryType == _ServiceFactoryType.constant ||
+              instanceFactory.factoryType == _ServiceFactoryType.lazy,
+          "You can't use get with an async Factory of ${T.toString()}.",
+        );
+        assert(
+          instanceFactory.isReady,
+          'You tried to access an instance of ${T.toString()} that is not ready yet',
+        );
+        instances[instanceFactory.instanceName ?? ""] =
+            instanceFactory.instance as T;
+      } else {
+        instances[instanceFactory.instanceName ?? ""] =
+            instanceFactory.getObject(null, null);
+      }
+    }
+    return instances;
+  }
+
   /// registers a type so that a new instance will be created on each call of [get] on that type
   /// [T] type to register
   /// [factoryFunc] factory function for this type

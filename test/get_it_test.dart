@@ -817,6 +817,42 @@ void main() {
     expect(instance1 is TestClassGeneric<TestBaseClass>, true);
   });
 
+  test('Opt test', () {
+    final getIt = GetIt.instance;
+    getIt.registerFactory<TestClass>(() => TestClass());
+
+    final instance1 = getIt.opt<TestClass>();
+    expect(instance1, isA<TestClass>());
+
+    final instance2 = getIt.opt<TestClass2>();
+    expect(instance2, null);
+  });
+
+  test('List test', () {
+    final getIt = GetIt.instance;
+    getIt.registerFactory<String>(() => "string1", instanceName: 't1');
+    getIt.registerFactory<String>(() => "string2", instanceName: 't2');
+    getIt.registerFactory<String>(() => "string3", instanceName: 't3');
+    getIt.registerSingleton("string4", instanceName: "t4");
+
+    final instance = getIt.list<String>();
+    expect(instance, isA<List<String>>());
+    expect(instance, ["string1", "string2", "string3", "string4"]);
+  });
+
+  test('Map test', () {
+    final getIt = GetIt.instance;
+    getIt.registerFactory<String>(() => "string1", instanceName: 't1');
+    getIt.registerFactory<String>(() => "string2", instanceName: 't2');
+    getIt.registerFactory<String>(() => "string3", instanceName: 't3');
+    getIt.registerSingleton("string4", instanceName: "t4");
+
+    final instance = getIt.map<String>();
+    expect(instance, isA<Map<String, String>>());
+    expect(instance,
+        {"t1": "string1", "t2": "string2", "t3": "string3", "t4": "string4"});
+  });
+
   test('register LazySingleton with lambda and factory function', () {
     GetIt.I.registerLazySingleton(() => SingletonInjector.configuration());
 
